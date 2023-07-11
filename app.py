@@ -278,7 +278,7 @@ def update_user_movie(user_movie_id):
     isWatched = data.get('isWatched')
     
     # Get user_movie need to update
-    user_movie = UserMovie.query.filter_by(userId = user_movie_id, movieId = movieId).all()
+    user_movie = UserMovie.query.filter_by(userId = user_movie_id, movieId = movieId).first()
     
     # Update user_movie
     if movieId:
