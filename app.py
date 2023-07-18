@@ -3,6 +3,9 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 import os
 import json
+import pandas as pd
+from utilities import predict_new_user
+from utilities import predict_user_has_rating
 
 # Init app
 app = Flask(__name__)
@@ -89,6 +92,14 @@ usermovies_schema = UserMovieSchema(many = True)
 def home():
     strHome = "Movie Database"
     return strHome
+
+# test
+# @app.rout('/predict')
+# def predict():
+#     query = 'SELECT * FROM User'
+#     with engine.connect() as connection:
+#         users_df = pd.read_sql_query(query, connection)
+#     return users_df
 
 @app.route('/users', methods = ['GET'])
 def get_all_users():
@@ -298,6 +309,28 @@ def update_user_movie(user_movie_id):
     
     # Return the serialized user_movie as JSON response with a 201 status code
     return jsonify(result), 201
+
+# Predict new user
+@app.route('/predict_new_user', methods=['POST'])
+def predict_another():
+    data = request.get_json()
+    try:
+        sample = data['genres']
+    except KeyError:
+        return jsonify({'error': 'No text sent'})
+    prediction = predict_new_user(sample)
+    return prediction
+
+# Predict user has rating
+@app.route('/predict', methods=['POST'])
+def predict():
+    data = request.get_json()
+    try:
+        sample = data['userId']
+    except KeyError:
+        return jsonify({'error': 'No text sent'})
+    prediction = predict_user_has_rating(sample)
+    return prediction
 
 # Run server
 if __name__ == "__main__":
