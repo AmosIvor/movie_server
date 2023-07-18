@@ -133,10 +133,10 @@ def predict_user_has_rating(user_id, top_n = 10):
   recommended_movies = movies_df[movies_df['movieId'].isin(recommended_movie_ids)]
   recommended_movies = pd.merge(recommended_movies, ratings_mean[['movieId', 'mean_rating']], on='movieId')
   
-  # # Format the mean_rating column
-  # recommended_movies['mean_rating'] = recommended_movies['mean_rating'].apply(lambda x: f"{x:.1f}")
+  # Format the mean_rating column
+  recommended_movies['mean_rating'] = recommended_movies['mean_rating'].apply(lambda x: f"{x:.1f}")
 
-  # # return recommended_movies[['movieId', 'title', 'genres', 'mean_rating', 'weighted_rating', 'similarity_score']]
+  # return recommended_movies[['movieId', 'title', 'genres', 'mean_rating', 'weighted_rating', 'similarity_score']]
   return json.dumps(recommended_movies[['movieId', 'movieTitle', 'movieGenre', 'mean_rating', 'movieImage']].to_dict('records'),indent=4)
 
 if __name__ == "__main__":
