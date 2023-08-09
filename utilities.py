@@ -89,18 +89,21 @@ def predict_new_user(genres, top_n=10, movie_data = movies_data):
     movie_data['similarity_score'] = similarity_scores
     movie_data = movie_data.sort_values(['similarity_score', 'weighted_rating'], ascending=False)
     movie_data.drop_duplicates(subset='movieId', keep='first', inplace=True)
-
-    # Select the top N recommended movies
-    recommended_movies = movie_data.head(top_n)
-    recommended_movies = pd.merge(recommended_movies, movies_df[['movieId', 'movieGenre', 'movieImage']], on='movieId')
+    
+    # Result
+    recommended_movies = movie_data
     recommended_movies = pd.merge(recommended_movies, ratings_mean[['movieId', 'mean_rating']], on='movieId')
+    recommended_movies = recommended_movies[recommended_movies['mean_rating'] > 4.0]
+    recommended_movies = pd.merge(recommended_movies, movies_df[['movieId', 'movieGenre', 'movieImage']], on='movieId')
+    recommended_movies = recommended_movies.head(top_n)
 
     # Format the mean_rating column
     recommended_movies['mean_rating'] = recommended_movies['mean_rating'].apply(lambda x: f"{x:.1f}")
 
     # return recommended_movies[['movieId', 'title', 'genres', 'mean_rating', 'weighted_rating', 'similarity_score']]
     # return json.loads(recommended_movies[['movieId', 'title', 'genres', 'mean_rating']].to_json(orient='records'))
-    return json.dumps(recommended_movies[['movieId', 'movieTitle', 'movieGenre', 'mean_rating', 'movieImage']].to_dict('records'),indent=4)
+    # return json.dumps(recommended_movies[['movieId', 'movieTitle', 'movieGenre', 'mean_rating', 'movieImage']].to_dict('records'),indent=4)
+    return recommended_movies[['movieId', 'movieTitle', 'movieGenre', 'mean_rating', 'movieImage']]
 
 # User has ratings before
 def predict_user_has_rating(user_id, top_n = 10):

@@ -93,18 +93,28 @@ def home():
     strHome = "Movie Database"
     return strHome
 
-# test
-# @app.rout('/predict')
-# def predict():
-#     query = 'SELECT * FROM User'
-#     with engine.connect() as connection:
-#         users_df = pd.read_sql_query(query, connection)
-#     return users_df
-
 @app.route('/users', methods = ['GET'])
 def get_all_users():
     # Get all users
     users = User.query.all()
+    
+    if not users:  # If no movies exist in the database
+        # Load data from the movies.json file
+        with open('./data/users.json') as json_file:
+            users_data = json.load(json_file)
+
+        # Save movies to the database
+        for user_data in users_data:
+            user = User(
+                userId = user_data['userId']
+            )
+
+            db.session.add(user)
+        
+        db.session.commit()
+        
+        # Retrieve movies from the database
+        users = Movie.query.all()
     
     # Serialize the user data using the users schema
     result = users_schema.dump(users)
@@ -201,7 +211,7 @@ def get_movies():
 
     if not movies:  # If no movies exist in the database
         # Load data from the movies.json file
-        with open('./movies.json') as json_file:
+        with open('./data/movies.json') as json_file:
             movies_data = json.load(json_file)
 
         # Save movies to the database
@@ -224,15 +234,45 @@ def get_movies():
     return jsonify(result)
 
 # USER MOVIE
+# @app.route('/user_movies', methods = ['GET'])
+# def get_all_user_movies():
+#     # Get all user_movie
+#     user_movies = UserMovie.query.all()
+    
+#     # Serialize the user_movie data using the users schema
+#     result = usermovies_schema.dump(user_movies)
+    
+#     # Return the serialized user_movie as JSON response
+#     return jsonify(result)
+
 @app.route('/user_movies', methods = ['GET'])
 def get_all_user_movies():
     # Get all user_movie
     user_movies = UserMovie.query.all()
     
-    # Serialize the user_movie data using the users schema
+    if not user_movies:  # If no user_movies exist in the database
+        # Load data from the user_movies.json file
+        with open('./data/ratings.json') as json_file:
+            user_movies_data = json.load(json_file)
+
+        # Save user_movies to the database
+        for data in user_movies_data:
+            user_movie = UserMovie(
+                userId = data['userId'],
+                movieId = data['movieId'],
+                rating = data['rating']
+            )
+            db.session.add(user_movie)
+        
+        db.session.commit()
+        
+        # Retrieve user_movies from the database
+        user_movies = UserMovie.query.all()
+    
+    # Serialize the user_movie data using the user_movies schema
     result = usermovies_schema.dump(user_movies)
     
-    # Return the serialized user_movie as JSON response
+    # REturn the serialized user_movie as JSON response
     return jsonify(result)
 
 @app.route('/user_movies/<int:user_movie_id>', methods = ['GET'])
@@ -311,6 +351,17 @@ def update_user_movie(user_movie_id):
     return jsonify(result), 201
 
 # Predict new user
+# @app.route('/predict_new_user', methods=['POST'])
+# def predict_another():
+#     data = request.get_json()
+#     try:
+#         sample = data['genres']
+#     except KeyError:
+#         return jsonify({'error': 'No text sent'})
+#     prediction = predict_new_user(sample)
+#     return prediction
+
+# Predict new user
 @app.route('/predict_new_user', methods=['POST'])
 def predict_another():
     data = request.get_json()
@@ -319,7 +370,18 @@ def predict_another():
     except KeyError:
         return jsonify({'error': 'No text sent'})
     prediction = predict_new_user(sample)
-    return prediction
+    recommendations = []
+    for index, row in prediction.iterrows():
+        recommendation = {
+            "movieId": row['movieId'],
+            "movieTitle": row['movieTitle'],
+            "movieGenre": row['movieGenre'],
+            "mean_rating": row['mean_rating'],
+            "movieImage": row['movieImage']
+        }
+        recommendations.append(recommendation)
+
+    return recommendations
 
 # Predict user has rating
 @app.route('/predict', methods=['POST'])
