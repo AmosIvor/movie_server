@@ -141,6 +141,22 @@ def get_user(user_id):
         # Return a 404 error if the user is not found
         return jsonify({'message': 'User not found'}), 404
 
+# DELETE USER
+# Get user
+@app.route('/users/<int:user_id>', methods = ['DELETE'])
+def delete_user(user_id):
+    # Get the user with the given ID from the database
+    user = User.query.get(user_id)
+    
+    if user:
+            # Delete the user_movie(s)
+            db.session.delete(user)
+            db.session.commit()
+            return jsonify({'message': 'User movies deleted successfully'}), 200
+    else:
+            # Return a 404 error if the user_movie is not found
+            return jsonify({'message': 'User not found'}), 404
+    
 @app.route('/users', methods = ['POST'])
 def create_user():
     # Get the user data from the request body
@@ -277,6 +293,21 @@ def get_user_movie(user_movie_id):
         
         # Return the serialized user_movie as JSON response
         return jsonify(result)
+    else:
+        # Return a 404 error if the user_movie is not found
+        return jsonify({'message': 'User not found'}), 404
+
+# DELETE
+@app.route('/user_movies/<int:user_movie_id>', methods = ['DELETE'])
+def delete_user_movie(user_movie_id):
+    user_movies = UserMovie.query.filter_by(userId = user_movie_id).all()
+
+    if user_movies:
+        # Delete the user_movie(s)
+        for user_movie in user_movies:
+            db.session.delete(user_movie)
+        db.session.commit()
+        return jsonify({'message': 'User movies deleted successfully'}), 200
     else:
         # Return a 404 error if the user_movie is not found
         return jsonify({'message': 'User not found'}), 404
