@@ -49,7 +49,7 @@ movie_similarities = cosine_similarity(user_item_matrix.T)
 path_model = './model'
 model_keras = tf.keras.models.load_model(path_model)
 
-def get_all_movies_has_rating():
+def get_all_movies_has_rating(top_n = 20):
   # Caculate mean rating of each movie
   movie_ratings = ratings_data.groupby('movieId')['rating'].mean().to_frame()
   
@@ -62,9 +62,36 @@ def get_all_movies_has_rating():
   # Merge necessary column
   result_data = pd.merge(result_data, movies_df[['movieId', 'movieTitle', 'movieGenre', 'movieImage']], on='movieId')
   
+  # Sort by mean rating in descending order and get top 20
+  result_data = result_data.sort_values(by='mean_rating', ascending=False)
+  result_data = result_data.head(top_n)
+  
   # return ratings_mean
   return result_data
-    
+
+def get_movies_by_genre_utilities(genre, top_n = 20):
+    # Caculate mean rating of each movie
+  movie_ratings = ratings_data.groupby('movieId')['rating'].mean().to_frame()
+  
+  # Handle mean ratings with two column: movieId and mean_rating
+  result_data = movie_ratings.reset_index().rename(columns={'rating': 'mean_rating'})
+  
+  # Format the mean_rating column
+  result_data['mean_rating'] = result_data['mean_rating'].apply(lambda x: f"{x:.1f}")
+  
+  # Merge necessary column
+  result_data = pd.merge(result_data, movies_df[['movieId', 'movieTitle', 'movieGenre', 'movieImage']], on='movieId')
+  
+  # Filter by genre
+  result_data = result_data[result_data['movieGenre'].str.contains(genre, case=False)]
+  
+  # Sort by mean rating in descending order and get top 20
+  result_data = result_data.sort_values(by='mean_rating', ascending=False)
+  result_data = result_data.head(top_n)
+  
+  # return ratings_mean
+  return result_data
+
 def predict_new_user(genres, top_n=10, movie_data = movies_data):
   # Split the genres string into a list of genres
   genres_list = genres.split(',')

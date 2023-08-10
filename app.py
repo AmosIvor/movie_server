@@ -7,6 +7,7 @@ import pandas as pd
 from utilities import predict_new_user
 from utilities import predict_user_has_rating
 from utilities import get_all_movies_has_rating
+from utilities import get_movies_by_genre_utilities
 
 # Init app
 app = Flask(__name__)
@@ -417,10 +418,30 @@ def predict():
 
     return recommendations
 
+# MOVIE
+
 # Get all movies has rating
 @app.route('/movies', methods=['GET'])
 def get_all_movies():
     data = get_all_movies_has_rating()
+    
+    movies_data = []
+    for index, row in data.iterrows():
+        movie_data = {
+            "movieId": row['movieId'],
+            "movieTitle": row['movieTitle'],
+            "movieGenre": row['movieGenre'],
+            "mean_rating": row['mean_rating'],
+            "movieImage": row['movieImage']
+        }
+        movies_data.append(movie_data)
+
+    return movies_data
+
+# Get movie by genre
+@app.route('/movies/<string:genre>', methods=['GET'])
+def get_movies_by_genre(genre):
+    data = get_movies_by_genre_utilities(genre)
     
     movies_data = []
     for index, row in data.iterrows():
