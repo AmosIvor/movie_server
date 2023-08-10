@@ -6,6 +6,7 @@ import json
 import pandas as pd
 from utilities import predict_new_user
 from utilities import predict_user_has_rating
+from utilities import get_all_movies_has_rating
 
 # Init app
 app = Flask(__name__)
@@ -205,45 +206,35 @@ def update_user(user_id):
 #     return jsonify({'message': 'All users have been deleted'}), 200
 
 # MOVIE
-@app.route('/movies')
-def get_movies():
-    movies = Movie.query.all()
+# @app.route('/movies')
+# def get_movies():
+#     movies = Movie.query.all()
 
-    if not movies:  # If no movies exist in the database
-        # Load data from the movies.json file
-        with open('./data/movies.json') as json_file:
-            movies_data = json.load(json_file)
+#     if not movies:  # If no movies exist in the database
+#         # Load data from the movies.json file
+#         with open('./data/movies.json') as json_file:
+#             movies_data = json.load(json_file)
 
-        # Save movies to the database
-        for movie_data in movies_data:
-            movie = Movie(
-                movieTitle = movie_data['title'],
-                movieGenre = movie_data['genres'],
-                movieImage = movie_data['image']
-            )
-            db.session.add(movie)
+#         # Save movies to the database
+#         for movie_data in movies_data:
+#             movie = Movie(
+#                 movieTitle = movie_data['title'],
+#                 movieGenre = movie_data['genres'],
+#                 movieImage = movie_data['image']
+#             )
+#             db.session.add(movie)
         
-        db.session.commit()
+#         db.session.commit()
         
-        # Retrieve movies from the database
-        movies = Movie.query.all()  
+#         # Retrieve movies from the database
+#         movies = Movie.query.all()  
 
-    # Serialize the movies using MovieSchema
-    result = movies_schema.dump(movies)
+#     # Serialize the movies using MovieSchema
+#     result = movies_schema.dump(movies)
 
-    return jsonify(result)
+#     return jsonify(result)
 
 # USER MOVIE
-# @app.route('/user_movies', methods = ['GET'])
-# def get_all_user_movies():
-#     # Get all user_movie
-#     user_movies = UserMovie.query.all()
-    
-#     # Serialize the user_movie data using the users schema
-#     result = usermovies_schema.dump(user_movies)
-    
-#     # Return the serialized user_movie as JSON response
-#     return jsonify(result)
 
 @app.route('/user_movies', methods = ['GET'])
 def get_all_user_movies():
@@ -351,17 +342,6 @@ def update_user_movie(user_movie_id):
     return jsonify(result), 201
 
 # Predict new user
-# @app.route('/predict_new_user', methods=['POST'])
-# def predict_another():
-#     data = request.get_json()
-#     try:
-#         sample = data['genres']
-#     except KeyError:
-#         return jsonify({'error': 'No text sent'})
-#     prediction = predict_new_user(sample)
-#     return prediction
-
-# Predict new user
 @app.route('/predict_new_user', methods=['POST'])
 def predict_another():
     data = request.get_json()
@@ -392,7 +372,37 @@ def predict():
     except KeyError:
         return jsonify({'error': 'No text sent'})
     prediction = predict_user_has_rating(sample)
-    return prediction
+    
+    recommendations = []
+    for index, row in prediction.iterrows():
+        recommendation = {
+            "movieId": row['movieId'],
+            "movieTitle": row['movieTitle'],
+            "movieGenre": row['movieGenre'],
+            "mean_rating": row['mean_rating'],
+            "movieImage": row['movieImage']
+        }
+        recommendations.append(recommendation)
+
+    return recommendations
+
+# Get all movies has rating
+@app.route('/movies', methods=['GET'])
+def get_all_movies():
+    data = get_all_movies_has_rating()
+    
+    movies_data = []
+    for index, row in data.iterrows():
+        movie_data = {
+            "movieId": row['movieId'],
+            "movieTitle": row['movieTitle'],
+            "movieGenre": row['movieGenre'],
+            "mean_rating": row['mean_rating'],
+            "movieImage": row['movieImage']
+        }
+        movies_data.append(movie_data)
+
+    return movies_data
 
 # Run server
 if __name__ == "__main__":
