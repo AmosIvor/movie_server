@@ -73,7 +73,6 @@ class UserSchema(ma.Schema):
     class Meta:
         fields = ('userId', 'username', 'email', 'password')
         model = User
-
 # Movie Schema
 class MovieSchema(ma.Schema):
     class Meta:
