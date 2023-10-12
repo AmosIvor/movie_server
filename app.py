@@ -1,6 +1,11 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
+from marshmallow.fields import Nested
+from sqlalchemy.orm import joinedload
+from marshmallow.fields import Raw
+from marshmallow.decorators import pre_dump
+from marshmallow import fields
 import os
 import json
 import pandas as pd
@@ -60,6 +65,8 @@ class UserMovie(db.Model):
     rating = db.Column(db.Float)
     isFavorited = db.Column(db.Boolean, default = False)
     isWatched = db.Column(db.Boolean, default = True)
+    # Define the relationship with Movie
+    movie = db.relationship('Movie', backref=db.backref('user_movies', lazy=True))
 
 # User Schema
 class UserSchema(ma.Schema):
@@ -76,8 +83,9 @@ class MovieSchema(ma.Schema):
 # UserMovie Schema
 class UserMovieSchema(ma.Schema):
     class Meta:
-        fields = ('userId', 'movieId', 'rating', 'isFavorited', 'isWatched')
+        fields = ('userId', 'movieId', 'rating', 'isFavorited', 'isWatched', 'movie')
         model = UserMovie
+    movie = Nested(MovieSchema)
 
 # Init Schema
 user_schema = UserSchema()
@@ -287,7 +295,7 @@ def get_all_user_movies():
 def get_user_movie(user_movie_id):
     # Get the user_movie with the given ID from the database
     user_movies = UserMovie.query.filter_by(userId = user_movie_id).all()
-    
+    # user_movies = UserMovie.query.options(joinedload(UserMovie.movie)).filter_by(userId=user_movie_id).first()
     if user_movies:
         # Serialize the user_movie data using the user schema
         result = usermovies_schema.dump(user_movies)
@@ -298,11 +306,12 @@ def get_user_movie(user_movie_id):
         # Return a 404 error if the user_movie is not found
         return jsonify({'message': 'User not found'}), 404
 
+
 # DELETE
 @app.route('/user_movies/<int:user_movie_id>', methods = ['DELETE'])
 def delete_user_movie(user_movie_id):
-    user_movies = UserMovie.query.filter_by(userId = user_movie_id).all()
-
+    # user_movies = UserMovie.query.filter_by(userId = user_movie_id).all()
+    user_movies = UserMovie.query.options(joinedload('movie')).filter_by(userId = user_movie_id).all()
     if user_movies:
         # Delete the user_movie(s)
         for user_movie in user_movies:
