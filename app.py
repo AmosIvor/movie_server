@@ -465,5 +465,5 @@ def get_movies_by_genre(genre):
     return movies_data
 
 # Run server
-if __name__ == "__main__":
-    app.run(debug = True)
+# if __name__ == "__main__":
+#     app.run(debug = True)
