@@ -306,6 +306,20 @@ def get_user_movie(user_movie_id):
         # Return a 404 error if the user_movie is not found
         return jsonify({'message': 'User not found'}), 404
 
+@app.route('/user_movies/<int:user_id>/<int:movie_id>', methods=['GET'])
+def get_user_movie_by_two_para(user_id, movie_id):
+    # Get the user_movie with the given userId and movieId from the database
+    user_movie = UserMovie.query.filter_by(userId=user_id, movieId=movie_id).first()
+
+    if user_movie:
+        # Serialize the user_movie data using the user_movie schema
+        result = usermovie_schema.dump(user_movie)
+
+        # Return the serialized user_movie as JSON response
+        return jsonify(result)
+    else:
+        # Return a 404 error if the user_movie is not found
+        return jsonify({'message': 'UserMovie not found'}), 404
 
 # DELETE
 # @app.route('/user_movies/<int:user_movie_id>', methods = ['DELETE'])
