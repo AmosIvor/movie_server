@@ -6,6 +6,7 @@ from sqlalchemy.orm import joinedload
 from marshmallow.fields import Raw
 from marshmallow.decorators import pre_dump
 from marshmallow import fields
+from sqlalchemy import or_, and_
 import os
 import json
 import pandas as pd
@@ -307,19 +308,19 @@ def get_user_movie(user_movie_id):
 
 
 # DELETE
-@app.route('/user_movies/<int:user_movie_id>', methods = ['DELETE'])
-def delete_user_movie(user_movie_id):
-    # user_movies = UserMovie.query.filter_by(userId = user_movie_id).all()
-    user_movies = UserMovie.query.options(joinedload('movie')).filter_by(userId = user_movie_id).all()
-    if user_movies:
-        # Delete the user_movie(s)
-        for user_movie in user_movies:
-            db.session.delete(user_movie)
-        db.session.commit()
-        return jsonify({'message': 'User movies deleted successfully'}), 200
-    else:
-        # Return a 404 error if the user_movie is not found
-        return jsonify({'message': 'User not found'}), 404
+# @app.route('/user_movies/<int:user_movie_id>', methods = ['DELETE'])
+# def delete_user_movie(user_movie_id):
+#     # user_movies = UserMovie.query.filter_by(userId = user_movie_id).all()
+#     user_movies = UserMovie.query.options(joinedload('movie')).filter_by(userId = user_movie_id).all()
+#     if user_movies:
+#         # Delete the user_movie(s)
+#         for user_movie in user_movies:
+#             db.session.delete(user_movie)
+#         db.session.commit()
+#         return jsonify({'message': 'User movies deleted successfully'}), 200
+#     else:
+#         # Return a 404 error if the user_movie is not found
+#         return jsonify({'message': 'User not found'}), 404
 
 @app.route('/user_movies', methods = ['POST'])
 def create_user_movie():
@@ -380,6 +381,27 @@ def update_user_movie(user_movie_id):
     
     # Return the serialized user_movie as JSON response with a 201 status code
     return jsonify(result), 201
+
+# DELETE TEMP
+@app.route('/user_movies/<int:user_movie_id>', methods=['DELETE'])
+def delete_user_movie(user_movie_id):
+    # Query for user_movies with the provided user_movie_id and movieId >= 50
+    user_movies_to_delete = UserMovie.query.filter(UserMovie.userId == user_movie_id, UserMovie.movieId > 100).all()
+    # user_movies_to_delete = UserMovie.query.filter(UserMovie.userId == user_movie_id, or_(UserMovie.movieId > 100, and_(UserMovie.movieId >= 1, UserMovie.movieId <= 100, UserMovie.movieId % 2 == 1))).all()
+
+    # If there are no such user_movies, return an error message
+    if not user_movies_to_delete:
+        return jsonify({'message': 'No user_movie found with userId: {} and movieId > 100'.format(user_movie_id)}), 404
+
+    # Otherwise, delete the user_movies
+    for user_movie in user_movies_to_delete:
+        db.session.delete(user_movie)
+
+    # Commit the changes to the database
+    db.session.commit()
+
+    # Return a success message
+    return jsonify({'message': 'Successfully DELETED user_movies for userId: {} with movieId >= 50'.format(user_movie_id)}), 200
 
 # Predict new user
 @app.route('/predict_new_user', methods=['POST'])
