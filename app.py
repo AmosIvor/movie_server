@@ -291,34 +291,13 @@ def get_all_user_movies():
     # REturn the serialized user_movie as JSON response
     return jsonify(result)
 
-# @app.route('/user_movies/<int:user_movie_id>', methods = ['GET'])
-# def get_user_movie(user_movie_id):
-#     # Get the user_movie with the given ID from the database
-#     user_movies = UserMovie.query.filter_by(userId = user_movie_id).all()
-#     # user_movies = UserMovie.query.options(joinedload(UserMovie.movie)).filter_by(userId=user_movie_id).first()
-#     if user_movies:
-#         # Serialize the user_movie data using the user schema
-#         result = usermovies_schema.dump(user_movies)
-        
-#         # Return the serialized user_movie as JSON response
-#         return jsonify(result)
-#     else:
-#         # Return a 404 error if the user_movie is not found
-#         return jsonify({'message': 'User not found'}), 404
-
-@app.route('/user_movies/<int:user_id>', methods=['GET'])
-def get_user_movie(user_id):
+@app.route('/user_movies/<int:user_movie_id>', methods = ['GET'])
+def get_user_movie(user_movie_id):
     # Get the user_movie with the given ID from the database
-    user_movies = UserMovie.query.filter_by(userId=user_id).all()
-    
+    user_movies = UserMovie.query.filter_by(userId = user_movie_id).all()
+    # user_movies = UserMovie.query.options(joinedload(UserMovie.movie)).filter_by(userId=user_movie_id).first()
     if user_movies:
-        for user_movie in user_movies:
-            user_movie.isFavorited = True
-
-        # Commit the changes to the database
-        db.session.commit()
-
-        # Serialize the updated user_movie data using the user schema
+        # Serialize the user_movie data using the user schema
         result = usermovies_schema.dump(user_movies)
         
         # Return the serialized user_movie as JSON response
@@ -326,6 +305,27 @@ def get_user_movie(user_id):
     else:
         # Return a 404 error if the user_movie is not found
         return jsonify({'message': 'User not found'}), 404
+
+# @app.route('/user_movies/<int:user_id>', methods=['GET'])
+# def get_user_movie(user_id):
+#     # Get the user_movie with the given ID from the database
+#     user_movies = UserMovie.query.filter_by(userId=user_id).all()
+    
+#     if user_movies:
+#         for user_movie in user_movies:
+#             user_movie.isFavorited = True
+
+#         # Commit the changes to the database
+#         db.session.commit()
+
+#         # Serialize the updated user_movie data using the user schema
+#         result = usermovies_schema.dump(user_movies)
+        
+#         # Return the serialized user_movie as JSON response
+#         return jsonify(result)
+#     else:
+#         # Return a 404 error if the user_movie is not found
+#         return jsonify({'message': 'User not found'}), 404
 
 @app.route('/user_movies/<int:user_id>/<int:movie_id>', methods=['GET'])
 def get_user_movie_by_two_para(user_id, movie_id):
