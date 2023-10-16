@@ -61,13 +61,13 @@ class Movie(db.Model):
 # UserMovie Model
 class UserMovie(db.Model):
     __tablename__ = 'user_movie'
-    userId = db.Column(db.Integer, db.ForeignKey('user.userId'), primary_key = True)
-    movieId = db.Column(db.Integer, db.ForeignKey('movie.movieId'), primary_key = True)
+    userId = db.Column(db.Integer, db.ForeignKey('user.userId', ondelete='CASCADE'), primary_key = True)
+    movieId = db.Column(db.Integer, db.ForeignKey('movie.movieId', ondelete='CASCADE'), primary_key = True)
     rating = db.Column(db.Float)
     isFavorited = db.Column(db.Boolean, default = False)
     isWatched = db.Column(db.Boolean, default = True)
     # Define the relationship with Movie
-    movie = db.relationship('Movie', backref=db.backref('user_movies', lazy=True))
+    movie = db.relationship('Movie', backref=db.backref('user_movies', lazy=True, cascade='all, delete-orphan'))
 
 # User Schema
 class UserSchema(ma.Schema):
@@ -384,21 +384,18 @@ def create_user_movie():
     # Return the serialized user_movie as JSON response with a 201 status code
     return jsonify(result), 201
 
-@app.route('/user_movies/<int:user_movie_id>', methods = ['PUT'])
-def update_user_movie(user_movie_id):
+@app.route('/user_movies/<int:user_id>/<int:movie_id>', methods = ['PUT'])
+def update_user_movie(user_id, movie_id):
     # Get the user_movie data from the request body
     data = request.get_json()
     # Extract the required fields from the user_movie data
-    movieId = data.get('movieId')
     rating = data.get('rating')
     isFavorited = data.get('isFavorited')
     isWatched = data.get('isWatched')
     
     # Get user_movie need to update
-    user_movie = UserMovie.query.filter_by(userId = user_movie_id, movieId = movieId).first()
+    user_movie = UserMovie.query.filter_by(userId = user_id, movieId = movie_id).first()
     # Update user_movie
-    if movieId:
-        user_movie.movieId = movieId
     if rating:
         user_movie.rating = rating
     if isFavorited is not None:
@@ -518,6 +515,94 @@ def get_movies_by_genre(genre):
         movies_data.append(movie_data)
 
     return movies_data
+
+# Get movie by id
+@app.route('/movies/<int:movie_id>', methods = ['GET'])
+def get_movie(movie_id):
+    movie = Movie.query.get(movie_id)
+    
+    if movie:
+        result = movie_schema.dump(movie)
+        
+        return jsonify(result)
+    else:
+        # Return a 404 error if the user is not found
+        return jsonify({'message': 'Movie not found'}), 404
+
+# Add movie
+@app.route('/movies', methods=['POST'])
+def createa_movie():
+    # Get the user data from the request body
+    data = request.get_json()
+    
+    # Extract the required fields from the movie data
+    movieTitle = data['movieTitle']
+    movieGenre = data['movieGenre']
+    movieImage = data['movieImage']
+    
+    # Create a new Movie instance with the extracted data
+    new_movie = Movie(movieTitle = movieTitle, movieGenre = movieGenre, movieImage = movieImage)
+    
+    # Add the new movie to the session
+    db.session.add(new_movie)
+    
+    # Commmit the changes to the database
+    db.session.commit()
+    
+    # Serialize the new movie data using the movie schema
+    result = movie_schema.dump(new_movie)
+    
+    # Return the serialized user as JSON response with a 201 status code
+    return jsonify(result), 201
+
+# Update movie
+@app.route('/movies/<int:movie_id>', methods = ['PUT'])
+def update_movie(movie_id):
+    # Get movie need to update
+    movie = Movie.query.get(movie_id)
+    
+    # Get the movie data from the request body
+    data = request.get_json()
+    
+    # Extract the required fileds from the movie data
+    movieTitle = data.get('movieTitle')
+    movieGenre = data.get('movieGenre')
+    movieImage = data.get('movieImage')
+    
+    # Update movie
+    if movieTitle:
+        movie.movieTitle = movieTitle
+    if movieGenre:
+        movie.movieGenre = movieGenre
+    if movieImage:
+        movie.movieImage = movieImage
+        
+    # Commit the changes to the database
+    db.session.commit()
+    
+    # Serialize the new movie data using the movie schema
+    result = movie_schema.dump(movie)
+    
+    # Return the serialized user as JSON response with a 201 status code
+    return jsonify(result), 201
+
+# Delete movie
+@app.route('/movies/<int:movie_id>', methods = ['DELETE'])
+def delete_movie(movie_id):
+    # Query
+    movie = Movie.query.get(movie_id)
+    
+    if not movie:
+        return jsonify({'message': 'No movie found with movieId: {}'.format(movie_id)}), 404
+    
+    # Delete the movie
+    db.session.delete(movie)
+        
+    # Commit the changes to the database
+    db.session.commit()
+    
+    # Return a success message
+    return jsonify({'message': 'Successfully DELETED movie for movieId: {}'.format(movie_id)}), 200
 
 # Run server
 if __name__ == "__main__":
