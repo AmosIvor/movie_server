@@ -388,7 +388,6 @@ def create_user_movie():
 def update_user_movie(user_movie_id):
     # Get the user_movie data from the request body
     data = request.get_json()
-    
     # Extract the required fields from the user_movie data
     movieId = data.get('movieId')
     rating = data.get('rating')
@@ -397,15 +396,14 @@ def update_user_movie(user_movie_id):
     
     # Get user_movie need to update
     user_movie = UserMovie.query.filter_by(userId = user_movie_id, movieId = movieId).first()
-    
     # Update user_movie
     if movieId:
         user_movie.movieId = movieId
     if rating:
         user_movie.rating = rating
-    if isFavorited:
+    if isFavorited is not None:
         user_movie.isFavorited = isFavorited
-    if isWatched:
+    if isWatched is not None:
         user_movie.isWatched = isWatched
     
     # Commit the changes to the database
