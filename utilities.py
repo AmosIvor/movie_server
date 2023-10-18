@@ -63,7 +63,7 @@ def get_all_movies_has_rating(top_n = 20):
   result_data = pd.merge(result_data, movies_df[['movieId', 'movieTitle', 'movieGenre', 'movieImage']], on='movieId')
   
   # Sort by mean rating in descending order and get top 20
-  result_data = result_data.sort_values(by='mean_rating', ascending=False)
+  # result_data = result_data.sort_values(by='mean_rating', ascending=False)
   result_data = result_data.head(top_n)
   
   # return ratings_mean
@@ -85,8 +85,11 @@ def get_movies_by_genre_utilities(genre, top_n = 20):
   # Filter by genre
   result_data = result_data[result_data['movieGenre'].str.contains(genre, case=False)]
   
+  # Filter movies <= 400
+  result_data = result_data.loc[result_data['movieId'] <= 400]
+  
   # Sort by mean rating in descending order and get top 20
-  result_data = result_data.sort_values(by='mean_rating', ascending=False)
+  # result_data = result_data.sort_values(by='mean_rating', ascending=False)
   result_data = result_data.head(top_n)
   
   # return ratings_mean
@@ -132,8 +135,9 @@ def predict_new_user(genres, top_n=10, movie_data = movies_data):
   # Result
   recommended_movies = movie_data
   recommended_movies = pd.merge(recommended_movies, ratings_mean[['movieId', 'mean_rating']], on='movieId')
-  recommended_movies = recommended_movies[recommended_movies['mean_rating'] > 4.0]
+  recommended_movies = recommended_movies[recommended_movies['mean_rating'] >= 3.9]
   recommended_movies = pd.merge(recommended_movies, movies_df[['movieId', 'movieGenre', 'movieImage']], on='movieId')
+  recommended_movies = recommended_movies.loc[recommended_movies['movieId'] <= 400]
   recommended_movies = recommended_movies.head(top_n)
 
   # Format the mean_rating column
@@ -155,6 +159,10 @@ def predict_user_has_rating(user_id, top_n = 10):
   movies_watched_by_user = ratings_df[ratings_df.userId == user_id]
   movies_not_watched = movies_df[
     ~movies_df['movieId'].isin(movies_watched_by_user.movieId.values)]['movieId']
+  
+  # Filter movies with id less than or equal to 400
+  movies_not_watched = movies_not_watched.loc[movies_not_watched <= 400]
+  
   movies_not_watched = list(
     set(movies_not_watched).intersection(set(movie2movie_encoded.keys())))
   

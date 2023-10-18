@@ -100,7 +100,7 @@ usermovies_schema = UserMovieSchema(many = True)
 # route
 @app.route('/')
 def home():
-    strHome = "Movie Database"
+    strHome = "Movie Home"
     return strHome
 
 @app.route('/users', methods = ['GET'])
@@ -365,9 +365,12 @@ def create_user_movie():
     # Extract the required fields from the user_movie data
     userId = data['userId']
     movieId = data['movieId']
-    rating = data['rating']
-    isFavorited = data['isFavorited']
-    isWatched = data['isWatched']
+    # rating = data['rating']
+    # isFavorited = data['isFavorited']
+    # isWatched = data['isWatched']
+    rating = data.get('rating', 5.0)
+    isFavorited = data.get('isFavorited', False)
+    isWatched = data.get('isWatched', False)
     
     # Create a new UserMovie instance with the extracted data
     new_user_movie = UserMovie(userId = userId, movieId = movieId, rating = rating, isFavorited = isFavorited, isWatched = isWatched)
@@ -483,7 +486,8 @@ def predict():
 # Get all movies has rating
 @app.route('/movies', methods=['GET'])
 def get_all_movies():
-    data = get_all_movies_has_rating()
+    number_movie = 200
+    data = get_all_movies_has_rating(number_movie)
     
     movies_data = []
     for index, row in data.iterrows():
