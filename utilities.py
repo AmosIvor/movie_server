@@ -49,7 +49,7 @@ movie_similarities = cosine_similarity(user_item_matrix.T)
 path_model = './model'
 model_keras = tf.keras.models.load_model(path_model)
 
-def get_all_movies_has_rating(top_n = 20):
+def get_all_movies_has_rating():
   # Caculate mean rating of each movie
   movie_ratings = ratings_data.groupby('movieId')['rating'].mean().to_frame()
   
@@ -62,14 +62,17 @@ def get_all_movies_has_rating(top_n = 20):
   # Merge necessary column
   result_data = pd.merge(result_data, movies_df[['movieId', 'movieTitle', 'movieGenre', 'movieImage']], on='movieId')
   
+  # Filter movies with movieId <= 400 and movieId >= 9744
+  result_data = result_data.loc[(result_data['movieId'] <= 400) | (result_data['movieId'] >= 9743)]
+  
   # Sort by mean rating in descending order and get top 20
   # result_data = result_data.sort_values(by='mean_rating', ascending=False)
-  result_data = result_data.head(top_n)
+  # result_data = result_data.head(top_n)
   
   # return ratings_mean
   return result_data
 
-def get_movies_by_genre_utilities(genre, top_n = 20):
+def get_movies_by_genre_utilities(genre):
     # Caculate mean rating of each movie
   movie_ratings = ratings_data.groupby('movieId')['rating'].mean().to_frame()
   
@@ -85,12 +88,12 @@ def get_movies_by_genre_utilities(genre, top_n = 20):
   # Filter by genre
   result_data = result_data[result_data['movieGenre'].str.contains(genre, case=False)]
   
-  # Filter movies <= 400
-  result_data = result_data.loc[result_data['movieId'] <= 400]
+  # Filter movies <= 400 and movies >= 9744
+  result_data = result_data.loc[(result_data['movieId'] <= 400) | (result_data['movieId'] >= 9743)]
   
   # Sort by mean rating in descending order and get top 20
   # result_data = result_data.sort_values(by='mean_rating', ascending=False)
-  result_data = result_data.head(top_n)
+  # result_data = result_data.head(top_n)
   
   # return ratings_mean
   return result_data

@@ -486,8 +486,7 @@ def predict():
 # Get all movies has rating
 @app.route('/movies', methods=['GET'])
 def get_all_movies():
-    number_movie = 200
-    data = get_all_movies_has_rating(number_movie)
+    data = get_all_movies_has_rating()
     
     movies_data = []
     for index, row in data.iterrows():
