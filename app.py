@@ -7,6 +7,7 @@ from marshmallow.fields import Raw
 from marshmallow.decorators import pre_dump
 from marshmallow import fields
 from sqlalchemy import or_, and_
+from sqlalchemy import func
 import os
 import json
 import pandas as pd
@@ -486,16 +487,30 @@ def predict():
 # Get all movies has rating
 @app.route('/movies', methods=['GET'])
 def get_all_movies():
-    data = get_all_movies_has_rating()
+    # print('get data')
+    # data = get_all_movies_has_rating()
+    data = db.session.query(
+        Movie.movieId,
+        Movie.movieTitle,
+        Movie.movieGenre,
+        Movie.movieImage,
+        func.avg(UserMovie.rating).label('mean_rating')
+    ).join(UserMovie).filter((Movie.movieId <= 400) | (Movie.movieId >= 9743)).group_by(Movie.movieId).all()
     
     movies_data = []
-    for index, row in data.iterrows():
+    # for index, row in data.iterrows():
+    for row in data:
         movie_data = {
-            "movieId": row['movieId'],
-            "movieTitle": row['movieTitle'],
-            "movieGenre": row['movieGenre'],
-            "mean_rating": row['mean_rating'],
-            "movieImage": row['movieImage']
+            "movieId": row.movieId,
+            "movieTitle": row.movieTitle,
+            "movieGenre": row.movieGenre,
+            "mean_rating": round(row.mean_rating, 1),
+            "movieImage": row.movieImage
+            # "movieId": row['movieId'],
+            # "movieTitle": row['movieTitle'],
+            # "movieGenre": row['movieGenre'],
+            # "mean_rating": row['mean_rating'],
+            # "movieImage": row['movieImage']
         }
         movies_data.append(movie_data)
 
@@ -504,16 +519,32 @@ def get_all_movies():
 # Get movie by genre
 @app.route('/movies/<string:genre>', methods=['GET'])
 def get_movies_by_genre(genre):
-    data = get_movies_by_genre_utilities(genre)
+    # data = get_movies_by_genre_utilities(genre)
+    data = db.session.query(
+        Movie.movieId, 
+        Movie.movieTitle, 
+        Movie.movieGenre, 
+        Movie.movieImage, 
+        func.avg(UserMovie.rating).label('mean_rating')
+    ).join(UserMovie).filter((Movie.movieId <= 400) | (Movie.movieId >= 9743), Movie.movieGenre.like('%'+genre+'%')).group_by(Movie.movieId).all()
     
     movies_data = []
-    for index, row in data.iterrows():
+    # for index, row in data.iterrows():
+    #     movie_data = {
+    #         "movieId": row['movieId'],
+    #         "movieTitle": row['movieTitle'],
+    #         "movieGenre": row['movieGenre'],
+    #         "mean_rating": row['mean_rating'],
+    #         "movieImage": row['movieImage']
+    #     }
+    #     movies_data.append(movie_data)
+    for row in data:
         movie_data = {
-            "movieId": row['movieId'],
-            "movieTitle": row['movieTitle'],
-            "movieGenre": row['movieGenre'],
-            "mean_rating": row['mean_rating'],
-            "movieImage": row['movieImage']
+            "movieId": row.movieId,
+            "movieTitle": row.movieTitle,
+            "movieGenre": row.movieGenre,
+            "mean_rating": round(row.mean_rating, 1),
+            "movieImage": row.movieImage
         }
         movies_data.append(movie_data)
 
@@ -550,6 +581,14 @@ def createa_movie():
     db.session.add(new_movie)
     
     # Commmit the changes to the database
+    db.session.commit()
+    
+    print('new_movie', new_movie.movieId)
+    
+    # # auto create user_movie with userId = 2
+    new_user_movie = UserMovie(userId = 2, movieId = new_movie.movieId, rating = 3.0, isFavorited = False, isWatched = True)
+    
+    db.session.add(new_user_movie)
     db.session.commit()
     
     # Serialize the new movie data using the movie schema
