@@ -19,6 +19,11 @@
     - [User API](#user-api)
     - [User Movie API](#user-movie-api)
     - [Recommend Movie API](#recommend-movie-api)
+  - [Guidelines: Deploy server to Azure](#guidelines-deploy-server-to-azure)
+    - [Architecture system](#architecture-system)
+    - [Prerequisites Deploy](#prerequisites-deploy)
+    - [Guidelines](#guidelines)
+    - [Resources](#resources)
   - [Contributing](#contributing)
   - [License](#license)
 
@@ -301,13 +306,69 @@ python app.py
 }
 ```
 
+## Guidelines: Deploy server to Azure
+
+- Purpose: You can change access server from localhost (just you can access) to default domain, that everyone can access (default domain is provided by azure web app)
+
+### Architecture system
+
+![Architecture system](./images/architecture.drawio.png)
+
+### Prerequisites Deploy
+
+- Docker 20.10.24
+- Azure Account
+
+### Guidelines
+
+- In order to deploy the Movie server on Microsoft Azure, you can follow these guidelines:
+
+Step 1: Dockerize Flask App
+
+```bash
+docker build -t [images]:tag
+```
+
+Step 2: Create Azure Container Register in Âuzre, name registry is image that omit `.azurecr.io`
+
+Step 3: Login server azure by command line:
+
+```bash
+docker login [login_server]
+```
+
+- Example: `docker login movierecommendationapi.azurecr.io`
+
+Step 4: You have to fill in `username` and `password`. It is not `username` and `password` you login in Azure. Specifically, it is `username` and `passowrd` of Azure Container Registry
+
+Step 5: Push repository to Azure Container Registry
+
+```bash
+docker push [images]:tag
+```
+
+- After that, you can check repository in tab `Repositories` of you Azure Container Registry
+
+Step 6: Create Azure App Service with integrate repository of Azure Container Registry
+
+Step 7: Run server by default domain in tab: `Overview`, wait a minute ...
+
+Step 8: You can use this public server as localhost to call api and anything you want
+
+### Resources
+
+[Flask Documentation](https://flask.palletsprojects.com/en/3.0.x/tutorial/)
+[Docker Documentation](https://docs.docker.com/get-started/)
+[Azure App Service Documentation](https://learn.microsoft.com/en-us/azure/app-service/)
+[Azure Container Registry Documentation](https://learn.microsoft.com/en-us/azure/container-registry/)
+
 ## Contributing
 
 Feel free to contribute to the project. Follow these steps
 
 1. Fork the repository
 2. Create a new branch: `git checkout -b feature/[your-feature-name]`
-3. Commit your changes: `git commit -m 'Add feature ...`
+3. Commit your changes: `git commit -m 'Add feature ...'`
 4. Push to the branch: `git push origin feature/[your-feature-name]`
 5. Submit a pull request
 
