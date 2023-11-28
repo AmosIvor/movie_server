@@ -1,3 +1,9 @@
+# Cache
 /__pycache__
+
+# Count duplicate image
 /count_image.py
 /output.json
+
+# Virtual environment
+/venv
